@@ -1,0 +1,50 @@
+[FR]
+
+Nom de l'exercice : life
+Fichiers attendus : *.c *.h
+Fonctions autorisées : atoi, read, putchar, malloc, calloc, realloc, free
+--------------------------------------------------------------------------------
+Vous devez écrire un programme qui simule un jeu de la vie.
+Le prototype de ce programme est le suivant :
+./life largeur hauteur iterations
+Largeur et hauteur sont les dimensions du plateau et iterations est le nombre
+d'itérations du jeu de la vie.
+La configuration initiale du plateau sera dessinée par une séquence de commandes
+dans l'entrée standard.
+Imaginez un stylo commençant dans le coin supérieur gauche du plateau.
+Chaque commande est l'un de ces caractères :
+
+w a s d -> déplace le stylo vers le haut, la gauche, le bas et la droite.
+x -> lève ou abaisse le stylo afin de commencer ou d'arrêter de dessiner.
+
+Une fois la fin du fichier atteinte, votre programme doit simuler un jeu de la
+vie sur ce plateau et afficher le résultat sur la sortie standard (chaque cellule
+vivante sera représentée par le caractère 'O' et chaque cellule morte sera
+représentée par une espace).
+Chaque cellule en dehors du tableau sera considérée comme morte.
+Exemple :
+$> echo 'sdxddssaaww' | ./a.out 5 5 0 | cat -e
+$
+OOO $
+O O $
+OOO $
+$
+$> echo 'sdxssdswdxddddsxaadwxwdxwaa' | ./a.out 10 6 0 | cat -e
+$
+O OOO $
+O O $
+OOO O $
+O OOO $
+$
+$> echo 'dxss' | ./a.out 3 3 0 | cat -e
+O $
+O $
+O $
+$> echo 'dxss' | ./a.out 3 3 1 | cat -e
+$
+OOO$
+$
+$> echo 'dxss' | ./a.out 3 3 2 | cat -e
+O $
+O $
+O $
