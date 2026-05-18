@@ -27,7 +27,7 @@ int init_g(t_g *g, char **av){
     g->j = 0;
     g->draw = 0;
     g->dead = ' ';
-    g->alive = '0';
+    g->alive = 'O';
     g->b = malloc(sizeof(char *) * g->h);
     if (!g->b)
         return (-1);
@@ -84,12 +84,13 @@ int count_n(t_g *g, int i, int j){
     int count = 0;
     for (int di = -1; di < 2; di++){
         for (int dj = -1; dj < 2; dj++){
-            if (di == 0 || dj == 0)
+            if (di == 0 && dj == 0)
                 continue;
             int ni = i + di;
             int nj = j + dj;
-            if (g->b[ni][nj] == g->alive)
-                count++;
+            if (ni >= 0 && ni < g->h && nj >= 0 && nj < g->w)
+                if (g->b[ni][nj] == g->alive)
+                    count++;
         }
     }
     return (count);
