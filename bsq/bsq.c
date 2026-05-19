@@ -49,6 +49,72 @@ void free_map(char** arr)
 	}
 }
 
+/* Remplit la map avec le caractere 'full' a l emplacement du carre puis affiche la map */
+void print_filled_square(t_map* map, t_square* square, t_elements* elements)
+{
+
+	for(int i = square->i; i < square->i + square->size; i++)
+	{
+		for(int j = square->j; j < square->j + square->size; j++)
+		{
+			if((i < map->height) && (j < map->width))
+				map->grid[i][j] = elements->full;
+		}
+	}
+
+	for(int i = 0; i < map->height; i++)
+	{
+		fputs(map->grid[i], stdout);
+		fputc('\n', stdout);
+	}
+}
+
+/* Retourne le plus petit des 3 entiers passes en parametre */
+int find_min(int n1, int n2, int n3)
+{
+	int min = n1;
+
+	if(n2 < min)
+		min = n2;
+	if(n3 < min)
+		min = n3;
+	return(min);
+}
+
+/* Algo de programmation dynamique: remplit une matrice et retient le plus grand carre vide */
+void find_big_square(t_map* map, t_square* square, t_elements* elements)
+{
+	// matrix init
+	int matrix[map->height][map->width];
+	for(int i = 0; i < map->height; i++)
+	{
+		for(int j = 0; j < map->width; j++)
+			matrix[i][j] = 0;
+	}
+
+	for(int i = 0; i < map->height; i++)
+	{
+		for(int j = 0; j < map->width; j++)
+		{
+			if(map->grid[i][j] == elements->obstacle)
+				matrix[i][j] = 0;
+			else if(i == 0 || j == 0)
+				matrix[i][j] = 1;
+			else {
+				int min = find_min(matrix[i - 1][j],matrix[i - 1][j - 1], matrix[i][j - 1]);
+				matrix[i][j] = min + 1;
+			}
+
+			if(matrix[i][j] > square->size)
+			{
+				square->size = matrix[i][j];
+				square->i = i - matrix[i][j] + 1;
+				square->j = j - matrix[i][j] + 1;
+			}
+		}
+	}
+}
+
 /* Verifie que chaque case de la map ne contient que c1 (vide) ou c2 (obstacle) */
 int element_control(char** map, char c1, char c2)
 {
@@ -64,28 +130,6 @@ int element_control(char** map, char c1, char c2)
 		}
 		i++;
 	}
-	return(0);
-}
-
-/* Lit la premiere ligne du fichier pour recuperer les parametres et valide leur coherence */
-int loadElements(FILE* file, t_elements* elements)
-{
-	int ret = fscanf(file, "%d %c %c %c", &(elements->n_lines), &(elements->empty), &(elements->obstacle), &(elements->full));
-
-	if((ret != 4))
-		return(-1);
-
-	if(elements->n_lines <= 0)
-		return(-1);
-	if(elements->empty == elements->obstacle || elements->empty == elements->full || elements->obstacle == elements->full)
-		return(-1);
-	if(elements->empty < 32 || elements->empty > 126)
-		return(-1);
-	if(elements->obstacle < 32 || elements->obstacle > 126)
-		return(-1);
-	if(elements->full < 32 || elements->full > 126)
-		return(-1);
-
 	return(0);
 }
 
@@ -163,71 +207,29 @@ int loadMap(FILE* file, t_map* map, t_elements* elements)
 	return (0);
 }
 
-/* Retourne le plus petit des 3 entiers passes en parametre */
-int find_min(int n1, int n2, int n3)
-{
-	int min = n1;
 
-	if(n2 < min)
-		min = n2;
-	if(n3 < min)
-		min = n3;
-	return(min);
+/* Lit la premiere ligne du fichier pour recuperer les parametres et valide leur coherence */
+int loadElements(FILE* file, t_elements* elements)
+{
+	int ret = fscanf(file, "%d %c %c %c", &(elements->n_lines), &(elements->empty), &(elements->obstacle), &(elements->full));
+
+	if((ret != 4))
+		return(-1);
+
+	if(elements->n_lines <= 0)
+		return(-1);
+	if(elements->empty == elements->obstacle || elements->empty == elements->full || elements->obstacle == elements->full)
+		return(-1);
+	if(elements->empty < 32 || elements->empty > 126)
+		return(-1);
+	if(elements->obstacle < 32 || elements->obstacle > 126)
+		return(-1);
+	if(elements->full < 32 || elements->full > 126)
+		return(-1);
+
+	return(0);
 }
 
-/* Algo de programmation dynamique: remplit une matrice et retient le plus grand carre vide */
-void find_big_square(t_map* map, t_square* square, t_elements* elements)
-{
-	// matrix init
-	int matrix[map->height][map->width];
-	for(int i = 0; i < map->height; i++)
-	{
-		for(int j = 0; j < map->width; j++)
-			matrix[i][j] = 0;
-	}
-
-	for(int i = 0; i < map->height; i++)
-	{
-		for(int j = 0; j < map->width; j++)
-		{
-			if(map->grid[i][j] == elements->obstacle)
-				matrix[i][j] = 0;
-			else if(i == 0 || j == 0)
-				matrix[i][j] = 1;
-			else {
-				int min = find_min(matrix[i - 1][j],matrix[i - 1][j - 1], matrix[i][j - 1]);
-				matrix[i][j] = min + 1;
-			}
-
-			if(matrix[i][j] > square->size)
-			{
-				square->size = matrix[i][j];
-				square->i = i - matrix[i][j] + 1;
-				square->j = j - matrix[i][j] + 1;
-			}
-		}
-	}
-}
-
-/* Remplit la map avec le caractere 'full' a l emplacement du carre puis affiche la map */
-void print_filled_square(t_map* map, t_square* square, t_elements* elements)
-{
-
-	for(int i = square->i; i < square->i + square->size; i++)
-	{
-		for(int j = square->j; j < square->j + square->size; j++)
-		{
-			if((i < map->height) && (j < map->width))
-				map->grid[i][j] = elements->full;
-		}
-	}
-
-	for(int i = 0; i < map->height; i++)
-	{
-		fputs(map->grid[i], stdout);
-		fputc('\n', stdout);
-	}
-}
 
 /* Orchestre toute la logique bsq: lit les parametres, lit la map, calcule, affiche, libere */
 int execute_bsq(FILE* file)
