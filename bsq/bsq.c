@@ -6,7 +6,7 @@
 /*   By: nkalkoul <nkalkoul@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/30 13:56:48 by fatkeski          #+#    #+#             */
-/*   Updated: 2026/05/18 15:50:58 by nkalkoul         ###   ########.fr       */
+/*   Updated: 2026/05/20 23:40:33 by nkalkoul         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -186,16 +186,6 @@ int loadMap(FILE* file, t_map* map, t_elements* elements)
 		}
 	}
 
-	/*
-	ssize_t extra = getline(&line, &len, file);
-	if(extra != -1) {  // Il y a des lignes en trop !
-		free(line);
-		free_map(map->grid);
-		return(-1);
-	}
-	// je ne sais pas si c'est necessaire ??
-	*/
-
 	if(element_control(map->grid, elements->empty, elements->obstacle) == -1)
 	{
 		free(line);
@@ -210,8 +200,9 @@ int loadMap(FILE* file, t_map* map, t_elements* elements)
 
 /* Lit la premiere ligne du fichier pour recuperer les parametres et valide leur coherence */
 int loadElements(FILE* file, t_elements* elements)
+// attention dans fscanf a bien coller les % dans "%d%c%c%c".
 {
-	int ret = fscanf(file, "%d %c %c %c", &(elements->n_lines), &(elements->empty), &(elements->obstacle), &(elements->full));
+	int ret = fscanf(file, "%d%c%c%c", &(elements->n_lines), &(elements->empty), &(elements->obstacle), &(elements->full));
 
 	if((ret != 4))
 		return(-1);
