@@ -34,7 +34,7 @@ cat bsq/map.txt | ./bsq/bsq
 ### Exemple
 Avec `bsq/map.txt` :
 ```
-9 . o B
+9.oB
 ...........................
 ....o......................
 ............o..............
@@ -67,7 +67,7 @@ Trois structures :
 
 Flux principal — `main` -> `convert_file_pointer` -> `execute_bsq` :
 
-1. **`loadElements`** lit la premiere ligne via `fscanf("%d %c %c %c", ...)`. Verifie :
+1. **`loadElements`** lit la premiere ligne via `fscanf("%d%c%c%c", ...)`. Verifie :
    - exactement 4 valeurs lues,
    - `n_lines > 0`,
    - les 3 caracteres sont distincts deux a deux,
