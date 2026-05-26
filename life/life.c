@@ -100,16 +100,12 @@ int play(t_g *g){
     char **temp;
 
     temp = malloc(sizeof(char * ) * g->h);
-    if (!temp){
-        free_b(g);
+    if (!temp)
         return (-1);
-    }
     for (int i = 0; i < g->h; i++){
         temp[i] = malloc(sizeof(char ) * g->w);
-        if (!temp[i]){
-            free_b(g);
+        if (!temp[i])
             return (-1);
-        }
         for (int j = 0; j < g->w; j++){
             int count = count_n(g, i, j);
             if (g->b[i][j] == g->alive){
