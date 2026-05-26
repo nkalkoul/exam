@@ -1,0 +1,42 @@
+Nom du projet    : mini_serv
+Fichiers attendus: mini_serv.c
+Fonctions autorisées: write, close, select, socket, accept, listen, send, recv, bind, strstr, malloc, realloc, free, calloc, bzero, atoi, sprintf, strlen, exit, strcpy, strcat, memset
+--------------------------------------------------------------------------------
+
+Écrivez un programme qui écoutera les connexions des clients sur un certain port sur 127.0.0.1 et qui permettra aux clients de communiquer entre eux
+
+Ce programme prendra comme premier argument le port sur lequel se lier
+Si aucun argument n'est donné, il doit écrire dans stderr "Wrong number of arguments" suivi d'un \n et quitter avec le statut 1
+Si un appel système retourne une erreur avant que le programme commence à accepter les connexions, il doit écrire dans stderr "Fatal error" suivi d'un \n et quitter avec le statut 1
+Si vous ne pouvez pas allouer de mémoire, il doit écrire dans stderr "Fatal error" suivi d'un \n et quitter avec le statut 1
+
+Votre programme doit être non-bloquant mais un client peut être paresseux et s'il ne lit pas votre message vous ne devez PAS le déconnecter...
+
+Votre programme ne doit pas contenir de préprocesseur #define
+Votre programme ne doit écouter que sur 127.0.0.1
+Le fd que vous recevrez sera déjà configuré pour faire en sorte que 'recv' ou 'send' bloque si select n'a pas été appelé avant de les appeler, mais ne bloquera pas sinon.
+
+Quand un client se connecte au serveur :
+- le client se verra attribuer un id. le premier client recevra l'id 0 et chaque nouveau client recevra le dernier id de client + 1
+- %d sera remplacé par ce numéro
+- un message est envoyé à tous les clients qui étaient connectés au serveur : "server: client %d just arrived\n"
+
+les clients doivent pouvoir envoyer des messages à votre programme.
+- le message ne contiendra que des caractères imprimables, pas besoin de vérifier
+- un seul message peut contenir plusieurs \n
+- quand le serveur reçoit un message, il doit le renvoyer à tous les autres clients avec "client %d: " avant chaque ligne !
+
+Quand un client se déconnecte du serveur :
+- un message est envoyé à tous les clients qui étaient connectés au serveur : "server: client %d just left\n"
+
+Les fuites de mémoire ou de fd sont interdites
+
+Pour vous aider, vous trouverez le fichier main.c avec le début d'un serveur et peut-être quelques fonctions utiles. (Attention ce fichier utilise des fonctions interdites ou écrit des choses qui ne doivent pas se trouver dans votre programme final)
+
+Attention notre testeur s'attend à ce que vous envoyiez les messages aussi vite que possible. Ne faites pas de buffer inutile.
+
+L'évaluation peut être un peu plus longue que d'habitude...
+
+Astuce : vous pouvez utiliser nc pour tester votre programme
+Astuce : vous devriez utiliser nc pour tester votre programme
+Astuce : Pour tester vous pouvez utiliser fcntl(fd, F_SETFL, O_NONBLOCK) mais utilisez select et ne vérifiez JAMAIS EAGAIN (man 2 send)

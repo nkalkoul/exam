@@ -1,14 +1,20 @@
 #include <string.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <stdio.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-// ========== FONCTIONS DONNEES DANS LE SUJET (extract_message + str_join) ==========
-// Ces 2 fonctions sont fournies dans main.c le jour de l'exam.
-// Tu les copies telles quelles depuis le sujet.
+int sprintf(char *, const char *, ...);
 
+typedef struct s_client { int id; char *buf; } t_client;
+
+t_client clients[1024];
+fd_set active, rset, wset;
+int maxfd, nextid;
+
+void fatal() { write(2, "Fatal error\n", 12); exit(1); }
+
+/* ========== COPIER-COLLER 100% depuis main.c ========== */
 int extract_message(char **buf, char **msg)
 {
 	char	*newbuf;
@@ -22,7 +28,7 @@ int extract_message(char **buf, char **msg)
 	{
 		if ((*buf)[i] == '\n')
 		{
-			newbuf = calloc(1, strlen(*buf + i + 1) + 1);
+			newbuf = calloc(1, sizeof(*newbuf) * (strlen(*buf + i + 1) + 1));
 			if (newbuf == 0)
 				return (-1);
 			strcpy(newbuf, *buf + i + 1);
@@ -45,7 +51,7 @@ char *str_join(char *buf, char *add)
 		len = 0;
 	else
 		len = strlen(buf);
-	newbuf = malloc(len + strlen(add) + 1);
+	newbuf = malloc(sizeof(*newbuf) * (len + strlen(add) + 1));
 	if (newbuf == 0)
 		return (0);
 	newbuf[0] = 0;
@@ -55,114 +61,57 @@ char *str_join(char *buf, char *add)
 	strcat(newbuf, add);
 	return (newbuf);
 }
+/* ====================================================== */
 
-// ========== TON CODE (ce que tu dois ecrire de memoire) ==========
-
-int		ids[65536];    // id de chaque client (indexe par fd)
-char	*bufs[65536];  // buffer de chaque client (indexe par fd)
-int		next_id = 0;   // prochain id a attribuer
-fd_set	reads, writes, active;
-int		maxfd;
-char	tmp[42 + 65536]; // buffer temporaire pour sprintf + messages
-
-void fatal(void)
-{
-	write(2, "Fatal error\n", 12);
-	exit(1);
+void send_all(int ex, char *s) {
+	for (int i = 0; i <= maxfd; i++)
+		if (FD_ISSET(i, &wset) && i != ex)
+			send(i, s, strlen(s), 0);
 }
 
-void send_all(int except, char *msg)
-{
-	for (int fd = 0; fd <= maxfd; fd++)
-		if (FD_ISSET(fd, &active) && fd != except)
-				send(fd, msg, strlen(msg), MSG_NOSIGNAL);
-}
+int main(int ac, char **av) {
+	int s, i, r, c, e;
+	struct sockaddr_in a;
+	char b[120000], m[120000], *l;
 
-int main(int ac, char **av)
-{
-	if (ac != 2)
-	{
-		write(2, "Wrong number of arguments\n", 26);
-		exit(1);
-	}
+	if (ac != 2) { write(2, "Wrong number of arguments\n", 26); exit(1); }
+	if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) fatal();
+	maxfd = s; FD_ZERO(&active); FD_SET(s, &active);
 
-	// --- SETUP SERVEUR ---
-	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd < 0)
-		fatal();
+	/* ========== COPIER-COLLER 100% depuis main.c ========== */
+	bzero(&a, sizeof(a));
+	a.sin_family = AF_INET;
+	a.sin_addr.s_addr = htonl(2130706433); //127.0.0.1
+	a.sin_port = htons(atoi(av[1]));
+	/* ====================================================== */
 
-	struct sockaddr_in addr;
-	bzero(&addr, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // 127.0.0.1
-	addr.sin_port = htons(atoi(av[1]));
+	if (bind(s, (const struct sockaddr *)&a, sizeof(a))) fatal();
+	if (listen(s, 10)) fatal();
 
-	if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-		fatal();
-	if (listen(sockfd, 128) < 0)
-		fatal();
-
-	FD_ZERO(&active);
-	FD_SET(sockfd, &active);
-	maxfd = sockfd;
-
-	// --- BOUCLE PRINCIPALE ---
-	while (1)
-	{
-		reads = writes = active;
-		if (select(maxfd + 1, &reads, &writes, 0, 0) < 0)
-			fatal();
-
-		for (int fd = 0; fd <= maxfd; fd++)
-		{
-			if (!FD_ISSET(fd, &reads))
-				continue;
-
-			// --- NOUVEAU CLIENT ---
-			if (fd == sockfd)
-			{
-				int client = accept(sockfd, 0, 0);
-				if (client < 0)
-					fatal();
-				ids[client] = next_id++;
-				bufs[client] = NULL;
-				FD_SET(client, &active);
-				if (client > maxfd)
-					maxfd = client;
-				sprintf(tmp, "server: client %d just arrived\n", ids[client]);
-				send_all(client, tmp);
+	while (1) {
+		rset = wset = active;
+		if (select(maxfd + 1, &rset, &wset, 0, 0) < 0) continue;
+		for (i = 0; i <= maxfd; i++) {
+			if (!FD_ISSET(i, &rset)) continue;
+			if (i == s) {
+				if ((c = accept(s, 0, 0)) < 0) continue;
+				if (c > maxfd) maxfd = c;
+				clients[c].id = nextid++; clients[c].buf = 0; FD_SET(c, &active);
+				sprintf(m, "server: client %d just arrived\n", clients[c].id);
+				send_all(c, m); break;
 			}
-			// --- MESSAGE OU DECONNEXION ---
-			else
-			{
-				char buf[65536 + 1];
-				int n = recv(fd, buf, 65536, 0);
-
-				if (n <= 0) // deconnexion
-				{
-					sprintf(tmp, "server: client %d just left\n", ids[fd]);
-					send_all(fd, tmp);
-					free(bufs[fd]);
-					bufs[fd] = NULL;
-					FD_CLR(fd, &active);
-					close(fd);
-				}
-				else // message recu
-				{
-					buf[n] = 0;
-					bufs[fd] = str_join(bufs[fd], buf);
-					if (!bufs[fd])
-						fatal();
-					char *msg;
-					while (extract_message(&bufs[fd], &msg) == 1)
-					{
-						sprintf(tmp, "client %d: ", ids[fd]);
-						send_all(fd, tmp);
-						send_all(fd, msg);
-						free(msg);
-					}
-				}
+			if ((r = recv(i, b, 119999, 0)) <= 0) {
+				sprintf(m, "server: client %d just left\n", clients[i].id);
+				send_all(i, m); free(clients[i].buf);
+				FD_CLR(i, &active); close(i); break;
 			}
+			b[r] = 0;
+			if (!(clients[i].buf = str_join(clients[i].buf, b))) fatal();
+			while ((e = extract_message(&clients[i].buf, &l)) > 0) {
+				sprintf(m, "client %d: ", clients[i].id);
+				send_all(i, m); send_all(i, l); free(l);
+			}
+			if (e == -1) fatal();
 		}
 	}
 }
