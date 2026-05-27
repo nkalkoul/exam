@@ -72,6 +72,7 @@ void fill_b(t_g *g){
                 break;
             default :
                 flag = 1;
+                break;
         }
         if (flag == 0 && g->draw == 1){
             if (g->i >= 0 && g->i < g->h && g->j >= 0 && g->j < g->w)
@@ -97,9 +98,7 @@ int count_n(t_g *g, int i, int j){
 }
 
 int play(t_g *g){
-    char **temp;
-
-    temp = malloc(sizeof(char * ) * g->h);
+    char **temp = malloc(sizeof(char * ) * g->h);
     if (!temp)
         return (-1);
     for (int i = 0; i < g->h; i++){
